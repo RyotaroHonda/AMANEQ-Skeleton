@@ -91,9 +91,9 @@
 *.hw/
 *.ip_user_files/
 *.sim/
+!*.bit/*.bit
+!*.mcs/*.mcs
 *.runs/
-*.bit/
-*.mcs/
 *.gen/
 ########
 #SiTCP
