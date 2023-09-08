@@ -11,6 +11,7 @@ use mylib.defToplevel.all;
 use mylib.defBCT.all;
 use mylib.defBusAddressMap.all;
 use mylib.defSiTCP.all;
+use mylib.defRBCP.all;
 use mylib.defMiiRstTimer.all;
 
 entity toplevel is
@@ -38,11 +39,11 @@ entity toplevel is
     DIN                 : in std_logic;
     FCSB                : out std_logic;
 
--- EXBASE connector -----------------------------------------------------
---    CRV_RXP             : in std_logic;
---    CRV_RXN             : in std_logic;
---    CRV_TXP             : out std_logic;
---    CRV_TXN             : out std_logic;
+-- MIKUMARI connector ---------------------------------------------------
+--    MIKUMARI_RXP             : in std_logic;
+--    MIKUMARI_RXN             : in std_logic;
+--    MIKUMARI_TXP             : out std_logic;
+--    MIKUMARI_TXN             : out std_logic;
 
 -- EEPROM ---------------------------------------------------------------
     EEP_CS              : out std_logic_vector(2 downto 1);
@@ -68,8 +69,6 @@ entity toplevel is
     CLK_FASTN           : in std_logic;
     CLK_SLOWP           : in std_logic;
     CLK_SLOWN           : in std_logic
-
--- Belle2 Link ----------------------------------------------------------
 
 -- Main port ------------------------------------------------------------
 -- Up port --
@@ -339,6 +338,8 @@ architecture Behavioral of toplevel is
   dip_sw(4)   <= DIP(4);
 
   LED         <= '0' & tcp_isActive(0) & clk_sys_locked & CDCE_LOCK;
+
+  -- MIKUMARI --------------------------------------------------------------------------
 
   -- C6C -------------------------------------------------------------------------------
   u_C6C_Inst : entity mylib.CDCE62002Controller

@@ -6,7 +6,7 @@
 library ieee, mylib;
 use ieee.std_logic_1164.all;
 use mylib.defBCT.all;
-use mylib.defSiTCP.all;
+use mylib.defRBCP.all;
 
 entity DummyBusController is
   Port(

@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 library mylib;
 use mylib.defBCT.all;
-use mylib.defSiTCP.all;
+use mylib.defRBCP.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
@@ -46,6 +46,7 @@ architecture RTL of RbcpCdc is
   signal we_sys_in, re_xgmii_out    : std_logic;
   signal empty_systolink            : std_logic;
   signal valid_xgmii_out            : std_logic;
+
 
   COMPONENT RbcpCdc_LinkToSys
     PORT (
@@ -134,6 +135,7 @@ begin
       empty     => empty_systolink,
       valid     => valid_xgmii_out
     );
+
 
 
 end RTL;
