@@ -7,7 +7,7 @@ library ieee, mylib;
 use ieee.std_logic_1164.all;
 use mylib.defBCT.all;
 use mylib.defBusAddressMap.all;
-use mylib.defSiTCP.all;
+use mylib.defRBCP.all;
 
 entity BusController is
   Port(
@@ -46,6 +46,8 @@ architecture RTL of BusController is
   signal rst_from_bus           : std_logic := '0';
   signal re_config              : std_logic := '1';
 
+  constant kMaxResetLoop        : integer:= 16;
+
   attribute keep of rst_from_bus  : signal is "true";
 
   -- external bus -------------------------------------------------------
@@ -76,6 +78,7 @@ begin
 
   -- Bus control process --
   u_BusControlProcess : process (clk, rstSys)
+    variable  reset_loop_i  : integer range 0 to kMaxResetLoop:= 0;
   begin
     if(rstSys = '1') then
       for i in 0 to kNumModules-1 loop
@@ -89,6 +92,8 @@ begin
       rst_from_bus	    <= '0';
       re_config         <= '1';
       state_bus	        <= Init;
+
+      reset_loop_i      := 0;
     elsif(clk'event and clk = '1') then
       case state_bus is
         when Init =>
@@ -103,6 +108,8 @@ begin
           rst_from_bus	    <= '0';
           re_config   	    <= '1';
           state_bus		      <= Idle;
+
+          reset_loop_i      := 0;
 
         when Idle =>
           if(reRBCP = '1' or weRBCP = '1') then
@@ -124,15 +131,19 @@ begin
                   when k3rdByte => data_ext_bus_out	<= kCurrentVersion(23 downto 16);
                   when others => data_ext_bus_out	<= kCurrentVersion(31 downto 24);
                 end case;
+                state_bus	<= Done;
               end if;
             elsif(we_ext_bus = '1') then
               if(addr_ext_bus(kNonMultiByte'range) = kBctReset(kNonMultiByte'range)) then -- software reset
                 rst_from_bus	<= '1';
+                state_bus	    <= ResetLoop;
+                reset_loop_i  := kMaxResetLoop;
               elsif(addr_ext_bus(kNonMultiByte'range) = kBctReConfig(kNonMultiByte'range)) then -- reconfig by SPI
                 re_config       <= '0';
+                state_bus	<= Done;
               end if;
             end if;
-            state_bus	<= Done;
+
           else -- Go to external user modules
             i_module  <= GetID(mid_ext_bus);
             state_bus	<= SetBus;
@@ -158,6 +169,12 @@ begin
           -- wait ready from user modules --
           if(reg_ready_local_bus(i_module) = '1') then
             state_bus	      <= Finalize;
+          end if;
+
+        when ResetLoop =>
+          reset_loop_i  := reset_loop_i -1;
+          if(reset_loop_i = 0) then
+            state_bus   <= Done;
           end if;
 
         when Finalize =>

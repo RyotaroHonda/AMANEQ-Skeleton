@@ -27,11 +27,11 @@ set_property PACKAGE_PIN B24 [get_ports MOSI]
 set_property PACKAGE_PIN A25 [get_ports DIN]
 set_property PACKAGE_PIN C23 [get_ports FCSB]
 
-# EXBASE connector -----------------------------------------------------
-#set_property PACKAGE_PIN B20 [get_ports CRV_RXP]
-#set_property PACKAGE_PIN A20 [get_ports CRV_RXN]
-#set_property PACKAGE_PIN A23 [get_ports CRV_TXP]
-#set_property PACKAGE_PIN A24 [get_ports CRV_TXN]
+# MIKUMARI connector ---------------------------------------------------
+#set_property PACKAGE_PIN B20 [get_ports MIKUMARI_RXP]
+#set_property PACKAGE_PIN A20 [get_ports MIKUMARI_RXN]
+#set_property PACKAGE_PIN A23 [get_ports MIKUMARI_TXP]
+#set_property PACKAGE_PIN A24 [get_ports MIKUMARI_TXN]
 
 
 # EEPROM ---------------------------------------------------------------
@@ -64,9 +64,6 @@ set_property PACKAGE_PIN AB10 [get_ports CLK_FASTN]
 set_property PACKAGE_PIN AB11 [get_ports CLK_SLOWP]
 set_property PACKAGE_PIN AC11 [get_ports CLK_SLOWN]
 
-
-
-# Belle2 Link ----------------------------------------------------------
 
 # Main port ------------------------------------------------------------
 # Up port --
@@ -297,11 +294,11 @@ set_property IOSTANDARD LVCMOS25 [get_ports FCSB]
 set_property IOB TRUE [get_ports FCSB]
 
 # EXBASE connector -----------------------------------------------------
-#set_property IOSTANDARD LVDS_25 [get_ports CRV_TXP]
-#set_property IOSTANDARD LVDS_25 [get_ports CRV_RXP]
+#set_property IOSTANDARD LVDS_25 [get_ports MIKUMARI_TXP]
+#set_property IOSTANDARD LVDS_25 [get_ports MIKUMARI_RXP]
 #set_property IOSTANDARD LVDS [get_ports TXP]
 #set_property IOSTANDARD LVDS [get_ports RXP]
-#set_property DIFF_TERM TRUE [get_ports CRV_RXP]
+#set_property DIFF_TERM TRUE [get_ports MIKUMARI_RXP]
 
 # EEPROM ---------------------------------------------------------------
 set_property IOSTANDARD LVCMOS25 [get_ports {EEP_CS[*]}]
@@ -327,8 +324,6 @@ set_property IOSTANDARD LVDS [get_ports CLK_FASTP]
 set_property IOSTANDARD LVDS [get_ports CLK_FASTN]
 set_property IOSTANDARD LVDS [get_ports CLK_SLOWP]
 set_property IOSTANDARD LVDS [get_ports CLK_SLOWN]
-
-# Belle2 Link ----------------------------------------------------------
 
 # Main port ------------------------------------------------------------
 # Up port --

@@ -50,6 +50,7 @@ package defBCT is
     GetDest,
     SetBus,
     Connect,
+    ResetLoop,
     Finalize,
     Done
     );
