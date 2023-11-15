@@ -50,6 +50,8 @@ architecture RTL of CDCE62002Controller is
   signal rst_shiftreg         : std_logic_vector(kWidthRstSr-1 downto 0);
   signal sync_lock            : std_logic;
   signal rst_msb_edge         : std_logic;
+  signal sync_chip_reset      : std_logic;
+  signal edge_chip_reset      : std_logic;
 
   -- internal signal declaration --------------------------------------
   -- start-up --
@@ -97,9 +99,9 @@ begin
   ---------------------------------------------------------------------
   -- CDCE62002 start-up pocess
   ---------------------------------------------------------------------
-  -- Auto reset sequence --
   PDB       <= not (chipReset or rst_shiftreg(kWidthRstSr-1));
 
+  -- Auto reset sequence --
   u_sync : entity mylib.synchronizer
     port map( clkIndep, chipLock, sync_lock );
 
@@ -120,13 +122,20 @@ begin
   u_rst_sr : process(clkIndep)
   begin
     if(clkIndep'event and clkIndep = '1') then
-      if(rst_msb_edge = '1') then
+      if(rst_msb_edge = '1' or edge_chip_reset = '1') then
         rst_shiftreg  <= (others => '1');
       else
         rst_shiftreg  <= rst_shiftreg(kWidthRstSr-2 downto 0) & '0';
       end if;
     end if;
   end process;
+
+  -- Create long reset signal --
+  u_sync_crst : entity mylib.synchronizer
+    port map( clkIndep, chipReset, sync_chip_reset );
+
+  u_edge_crst : entity mylib.EdgeDetector
+    port map('0', clkIndep, sync_chip_reset, edge_chip_reset);
 
   -- Main --
   ODDR_inst : ODDR
