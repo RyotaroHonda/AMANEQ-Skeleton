@@ -1,6 +1,9 @@
 # AMANEQ-Skeleton
 AMANEQ Skeleton firmware
 
+## Vivado version
+2023.1.1
+
 ## Update submodule
 You need to update the submodule (sitcp) after cloning.
 The used SiTCP version is v11.0.
