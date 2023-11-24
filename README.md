@@ -16,6 +16,7 @@ On AMANEQ, the reference clock frequency for GTX is 156.25 since AMANEQ supports
 In order to use the pcs_pma IP core for GbE, the IP setting must be changed.
 After cloning the repogitory to your PC, once you need to do the procedure below.
 ```
+[TCL console] set_param project.defaultIPCacheSetting none
 [TCL console] set_property IS_MANAGED true [get_files gig_ethernet_pcs_pma.xci]
 ```
 Once reset and generates the output products, and again set IS_MANAGED to false.
