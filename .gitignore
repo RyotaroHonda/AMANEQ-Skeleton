@@ -95,10 +95,6 @@
 !*.mcs/*.mcs
 *.runs/
 *.gen/
-########
-#SiTCP
-#######
-!sitcp
 #########
 # Ignore IP files
 #########
