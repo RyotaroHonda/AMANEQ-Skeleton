@@ -410,6 +410,7 @@ architecture Behavioral of toplevel is
 
       -- Module output --
       shutdownOverTemp  => shutdown_over_temp,
+      xadcTempOut       => open,
       uncorrectableAlarm => uncorrectable_flag,
 
       -- Local bus --

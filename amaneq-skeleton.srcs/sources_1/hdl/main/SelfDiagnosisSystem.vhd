@@ -20,6 +20,7 @@ entity SelfDiagnosisSystem is
 
     -- Module output --
     shutdownOverTemp    : out std_logic;
+    xadcTempOut         : out std_logic_vector(11 downto 0);
     uncorrectableAlarm  : out std_logic;
 --    alarmUserTemp       : out std_logic;
 --    aralmUserVccint     : out std_logic;
@@ -38,8 +39,8 @@ architecture RTL of SelfDiagnosisSystem is
   attribute mark_debug        : string;
 
   -- System --
-  signal sync_reset           : std_logic;
-  signal sync_reset_icap      : std_logic;
+  signal sync_reset       : std_logic;
+  signal sync_reset_icap       : std_logic;
 
   -- internal signal declaration --------------------------------------
   -- XADC -------------------------------------------------------------
@@ -47,9 +48,13 @@ architecture RTL of SelfDiagnosisSystem is
   signal reg_drp_enable       : std_logic;
   signal reg_drp_write_enable : std_logic;
   signal drp_ready            : std_logic;
+  signal busy_xadc            : std_logic;
+  signal interupt_mode        : std_logic;
+  signal interupt_success     : std_logic;
 
   signal user_temp_alarm      : std_logic;
---  signal user_vccint_alarm    : std_logic;
+  signal user_vccint_alarm    : std_logic;
+  signal user_vccaux_alarm    : std_logic;
   signal over_temp            : std_logic;
 
   component xadc_sys
@@ -70,6 +75,10 @@ architecture RTL of SelfDiagnosisSystem is
 
       -- user temp. alarm --
       user_temp_alarm_out   : out std_logic;
+      -- user vccint alarm --
+      vccint_alarm_out      : out std_logic;
+      -- user vccaux alarm --
+      vccaux_alarm_out      : out std_logic;
       -- over temp. (system shutdown) --
       ot_out                : out std_logic;
 
@@ -77,6 +86,8 @@ architecture RTL of SelfDiagnosisSystem is
       channel_out   : out std_logic_vector(kWidthXadcCh-1 downto 0);
       -- End of conversion --
       eoc_out       : out std_logic;
+      -- VRAM alarm output --
+      vbram_alarm_out : out std_logic;
       -- not in use --
       alarm_out     : out std_logic;
       -- End of (a) sequence
@@ -92,6 +103,7 @@ architecture RTL of SelfDiagnosisSystem is
 
   type XadcProcessType is
     (Idle,
+     SetTempRead,
      SetMode, DoRead, DoWrite, WaitRead,
      Finalize, Done
      );
@@ -106,9 +118,10 @@ architecture RTL of SelfDiagnosisSystem is
   -- Local bus --
   signal reg_sds_status       : std_logic_vector(kWidthStatus-1 downto 0);
 
-  signal start_drp            : std_logic;
+  signal interupt_drp         : std_logic;
   signal reg_drp_mode         : std_logic;
   signal reg_drp_din          : std_logic_vector(kWidthDrpDIn -1 downto 0);
+  signal reg_drp_addr_user    : std_logic_vector(kWidthDrpAddr -1 downto 0);
   signal reg_drp_addr         : std_logic_vector(kWidthDrpAddr -1 downto 0);
 
   signal reg_watchdog_alarm       : std_logic;
@@ -122,12 +135,15 @@ architecture RTL of SelfDiagnosisSystem is
 
   -- debug --
   -- attribute mark_debug of drp_dout              : signal is "true";
-  -- attribute mark_debug of reg_drp_enable        : signal is "true";
-  -- attribute mark_debug of reg_drp_write_enable  : signal is "true";
+--  attribute mark_debug of reg_drp_enable        : signal is "true";
+--  attribute mark_debug of reg_drp_write_enable  : signal is "true";
   -- attribute mark_debug of drp_ready             : signal is "true";
   -- attribute mark_debug of reg_drp_dout          : signal is "true";
   -- attribute mark_debug of end_xadc_process      : signal is "true";
-  -- attribute mark_debug of start_drp             : signal is "true";
+  -- attribute mark_debug of interupt_mode         : signal is "true";
+  -- attribute mark_debug of interupt_drp          : signal is "true";
+  -- attribute mark_debug of interupt_success      : signal is "true";
+  -- attribute mark_debug of state_xadc            : signal is "true";
   -- attribute mark_debug of reg_drp_mode          : signal is "true";
   -- attribute mark_debug of reg_drp_addr          : signal is "true";
   -- attribute mark_debug of addrLocalBus          : signal is "true";
@@ -136,7 +152,7 @@ architecture RTL of SelfDiagnosisSystem is
 -- =============================== body ===============================
 begin
   -- Module ports --
-  shutdownOverTemp    <= over_temp;
+  shutdownOverTemp  <= over_temp;
   uncorrectableAlarm  <= reg_uncorrectable_alarm;
 
   process(clk, sync_reset)
@@ -147,8 +163,8 @@ begin
       reg_sds_status  <= "00" &
                          reg_uncorrectable_alarm &
                          reg_watchdog_alarm &
-                         "00" &
---                         user_vccint_alarm &
+                         user_vccaux_alarm &
+                         user_vccint_alarm &
                          user_temp_alarm &
                          over_temp;
     end if;
@@ -174,7 +190,9 @@ begin
       -- user temp. alarm --
       user_temp_alarm_out   => user_temp_alarm,
       -- user vccint alarm --
---      vccint_alarm_out      => user_vccint_alarm,
+      vccint_alarm_out      => user_vccint_alarm,
+      -- user vccaux alarm --
+      vccaux_alarm_out      => user_vccaux_alarm,
       -- over temp. (system shutdown) --
       ot_out                => over_temp,
 
@@ -183,29 +201,48 @@ begin
       -- End of conversion --
 --      eoc_out       => end_of_conversion,
       eoc_out       => open,
+      -- VRAM alarm output --
+      vbram_alarm_out => open,
       -- not in use --
       alarm_out     => open,
       -- End of (a) sequence
       eos_out       => open,
       -- ADC is running --
-      busy_out      => open
---      busy_out      => busy_xadc
+--      busy_out      => open
+      busy_out      => busy_xadc
       );
 
   u_XadcProcess : process(clk, sync_reset)
+    variable interval_counter : integer range 0 to kLengthInterval;
   begin
     if(sync_reset = '1') then
-      state_xadc <= Idle;
+      interval_counter  := kLengthInterval;
+      interupt_mode     <= '0';
+      interupt_success  <= '0';
+      state_xadc        <= Idle;
     elsif(clk'event and clk = '1') then
       case state_xadc is
         when Idle =>
+          interval_counter      := interval_counter -1;
           reg_drp_enable        <= '0';
           reg_drp_write_enable  <= '0';
           end_xadc_process      <= '0';
-          if(start_drp = '1') then
-            state_xadc  <= SetMode;
+          interupt_success      <= '0';
+          if(interupt_drp = '1') then
+            interupt_mode     <= '1';
+            interupt_success  <= '1';
+            state_xadc        <= SetMode;
+          elsif(interval_counter = 0) then
+            interupt_mode   <= '0';
+            state_xadc      <= SetTempRead;
           end if;
 
+        -- Periodic temp read --
+        when SetTempRead =>
+          reg_drp_addr  <= kDrpAddrTemp;
+          state_xadc    <= DoRead;
+
+        -- Interuput sequence --
         when SetMode =>
           if(reg_drp_mode = kIsRead) then
             state_xadc  <= DoRead;
@@ -226,17 +263,24 @@ begin
           reg_drp_enable        <= '0';
           if(drp_ready = '1') then
             reg_drp_dout        <= drp_dout;
+            if(interupt_mode = '0') then
+              xadcTempOut       <= drp_dout(kWidthDrpDOut-1 downto 4);
+            end if;
             state_xadc          <= Finalize;
           end if;
 
         when Finalize =>
           reg_drp_enable        <= '0';
           reg_drp_write_enable  <= '0';
-          end_xadc_process      <= '1';
-          state_xadc            <= Done;
+          if(busy_xadc = '0') then
+            end_xadc_process      <= '1';
+            state_xadc            <= Done;
+          end if;
 
         when Done =>
+          interval_counter  := kLengthInterval;
           end_xadc_process  <= '0';
+          interupt_success  <= '0';
           state_xadc        <= Idle;
 
         when others =>
@@ -331,18 +375,18 @@ begin
   u_BusProcess : process(clk, sync_reset)
   begin
     if(sync_reset = '1') then
-      start_drp           <= '0';
+      interupt_drp        <= '0';
       reg_drp_mode        <= '0';
       reg_drp_din         <= (others => '0');
-      reg_drp_addr        <= (others => '0');
+      reg_drp_addr_user   <= (others => '0');
       reg_err_strobe      <= '0';
       reg_err_inject_address  <= (others => '0');
       reg_rst_counter     <= '0';
-      state_lbus	        <= Idle;
+      state_lbus	        <= Init;
     elsif(clk'event and clk = '1') then
       case state_lbus is
         when Idle =>
-          start_drp       <= '0';
+          interupt_drp       <= '0';
           reg_err_strobe  <= '0';
           reg_rst_counter <= '0';
 
@@ -365,8 +409,8 @@ begin
               state_lbus	    <= Done;
 
             when kXadcDrpAddr(kNonMultiByte'range) =>
-              reg_drp_addr    <= dataLocalBusIn(kWidthDrpAddr-1 downto 0);
-              state_lbus	    <= Done;
+              reg_drp_addr_user <= dataLocalBusIn(kWidthDrpAddr-1 downto 0);
+              state_lbus	      <= Done;
 
             when kXadcDrpDin(kNonMultiByte'range) =>
               if( addrLocalBus(kMultiByte'range) = k1stByte) then
@@ -418,7 +462,7 @@ begin
               state_lbus	    <= Done;
 
             when kXadcDrpAddr(kNonMultiByte'range) =>
-              dataLocalBusOut <= '0' & reg_drp_addr;
+              dataLocalBusOut <= '0' & reg_drp_addr_user;
               state_lbus	    <= Done;
 
             when kXadcDrpDout(kNonMultiByte'range) =>
@@ -447,11 +491,13 @@ begin
           end case;
 
         when Execute =>
-          start_drp       <= '1';
-          state_lbus      <= Finalize;
+          interupt_drp    <= '1';
+          if(interupt_success = '1') then
+            state_lbus    <= Finalize;
+          end if;
 
         when Finalize =>
-          start_drp       <= '0';
+          interupt_drp      <= '0';
           if(end_xadc_process = '1') then
             state_lbus      <= Done;
           end if;
@@ -475,6 +521,7 @@ begin
 
   u_reset_gen_icap   : entity mylib.ResetGen
     port map(rst, clkIcap, sync_reset_icap);
+
 
 end RTL;
 
