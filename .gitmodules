@@ -1,3 +1,3 @@
-[submodule "sitcp"]
-	path = sitcp
-	url = https://github.com/BeeBeansTechnologies/SiTCP_Netlist_for_Kintex7.git
+[submodule "hdl/bbt-sitcp-core"]
+	path = hdl/bbt-sitcp-core
+	url = https://github.com/BeeBeansTechnologies/SiTCP_Netlist_for_Kintex7
