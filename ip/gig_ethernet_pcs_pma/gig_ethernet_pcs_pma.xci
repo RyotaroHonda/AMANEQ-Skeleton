@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "gig_ethernet_pcs_pma",
     "component_reference": "xilinx.com:ip:gig_ethernet_pcs_pma:16.2",
-    "ip_revision": "13",
+    "ip_revision": "12",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -118,13 +118,12 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "13" } ],
-        "LOCKEDBYUSER": [ { "value": "TRUE" } ],
-        "MANAGED": [ { "value": "TRUE" } ],
+        "IPREVISION": [ { "value": "12" } ],
+        "MANAGED": [ { "value": "FALSE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2023.1.1" } ],
+        "SWVERSION": [ { "value": "2023.1" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },
