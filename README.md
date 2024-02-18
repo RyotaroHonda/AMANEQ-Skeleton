@@ -4,12 +4,27 @@ AMANEQ Skeleton firmware
 ## Vivado version
 2023.1.1
 
+# INSTRATION guide
+The procedure to generate the Vivado project. You need to complete the following things once after cloning the project.
+
 ## Update submodule
-You need to update the submodule (sitcp) after cloning.
-The used SiTCP version is v11.0.
+You need to update the submodule after cloning.
 ```
 git submodule update -i
 ```
+
+## Generate .xpr file
+Generate the Vivado project from the TCL script.
+
+**For Windows User:**
+Launch the for-windows.bat in CMD or PowerShell with the argument for the path for vivado.
+
+Example
+
+![image](https://github.com/spadi-alliance/AMANEQ-Skeleton/assets/41090607/ba7c1ef0-8c9b-4c0e-9947-22093b7ae244)
+
+**For Linux User:**
+Please execute project.tcl by vivado with the batch mode with same arguments written in for-windows.bat.
 
 ## Modify gig_ethernet_pcs_pma IP
 On AMANEQ, the reference clock frequency for GTX is 156.25 since AMANEQ supports 10GbE.
