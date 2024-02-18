@@ -4,7 +4,7 @@ AMANEQ Skeleton firmware
 ## Vivado version
 2023.1.1
 
-# INSTRATION guide
+# INSTALLATION guide
 The procedure to generate the Vivado project. You need to complete the following things once after cloning the project.
 
 ## Update submodule
