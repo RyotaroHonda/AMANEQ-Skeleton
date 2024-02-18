@@ -14,7 +14,8 @@ git submodule update -i
 ```
 
 ## Generate .xpr file
-Generate the Vivado project from the TCL script.
+Generate the Vivado project from the TCL script. The Vivado project related directories and files are genereted under build directory.
+The files in the build directory are not under Git management. You can remove them and re-generate the project anytime.
 
 **For Windows User:**
 Launch the for-windows.bat in CMD or PowerShell with the argument for the path for vivado.
