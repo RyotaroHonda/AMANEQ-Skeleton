@@ -4,7 +4,7 @@
     "xci_name": "clk_wiz_sys",
     "component_reference": "xilinx.com:ip:clk_wiz:6.0",
     "ip_revision": "12",
-    "gen_directory": "../../../../amaneq-skeleton.gen/sources_1/ip/clk_wiz_sys",
+    "gen_directory": ".",
     "parameters": {
       "component_parameters": {
         "Component_Name": [ { "value": "clk_wiz_sys", "resolve_type": "user", "usage": "all" } ],
@@ -588,7 +588,7 @@
         "BOARD_CONNECTIONS": [ { "value": "" } ],
         "DEVICE": [ { "value": "xc7k160t" } ],
         "PACKAGE": [ { "value": "ffg676" } ],
-        "PREFHDL": [ { "value": "VHDL" } ],
+        "PREFHDL": [ { "value": "VERILOG" } ],
         "SILICON_REVISION": [ { "value": "" } ],
         "SIMULATOR_LANGUAGE": [ { "value": "MIXED" } ],
         "SPEEDGRADE": [ { "value": "-2" } ],
@@ -599,7 +599,7 @@
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
         "IPREVISION": [ { "value": "12" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../amaneq-skeleton.gen/sources_1/ip/clk_wiz_sys" } ],
+        "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2023.1.1" } ],
