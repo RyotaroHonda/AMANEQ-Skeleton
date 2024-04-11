@@ -7,12 +7,10 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 library mylib;
-use mylib.defToplevel.all;
 use mylib.defBCT.all;
 use mylib.defBusAddressMap.all;
 use mylib.defSiTCP.all;
 use mylib.defRBCP.all;
-use mylib.defMiiRstTimer.all;
 
 entity toplevel is
   Port (
@@ -29,10 +27,10 @@ entity toplevel is
 -- GTX ------------------------------------------------------------------
     GTX_REFCLK_P        : in std_logic;
     GTX_REFCLK_N        : in std_logic;
-    GTX_TX_P            : out std_logic_vector(kNumGtx downto 1);
-    GTX_RX_P            : in  std_logic_vector(kNumGtx downto 1);
-    GTX_TX_N            : out std_logic_vector(kNumGtx downto 1);
-    GTX_RX_N            : in  std_logic_vector(kNumGtx downto 1);
+    GTX_TX_P            : out std_logic_vector(1 downto 1);
+    GTX_RX_P            : in  std_logic_vector(1 downto 1);
+    GTX_TX_N            : out std_logic_vector(1 downto 1);
+    GTX_RX_N            : in  std_logic_vector(1 downto 1);
 
 -- SPI flash ------------------------------------------------------------
     MOSI                : out std_logic;
@@ -94,7 +92,14 @@ architecture Behavioral of toplevel is
   attribute mark_debug : string;
 
   -- System --------------------------------------------------------------------------------
+  -- AMANEQ specification
+  constant kNumLED      : integer:= 4;
+  constant kNumBitDIP   : integer:= 4;
+  constant kNumNIM      : integer:= 2;
+  constant kNumGtx      : integer:= 1;
+
   signal sitcp_reset  : std_logic;
+  signal raw_system_reset : std_logic;
   signal system_reset : std_logic;
   signal user_reset   : std_logic;
 
@@ -105,6 +110,8 @@ architecture Behavioral of toplevel is
   signal rst_from_bus : std_logic;
 
   signal delayed_usr_rstb : std_logic;
+
+  signal module_ready     : std_logic;
 
   -- DIP -----------------------------------------------------------------------------------
   signal dip_sw       : std_logic_vector(DIP'range);
@@ -214,6 +221,7 @@ architecture Behavioral of toplevel is
         GMII_MDIO_OE          : out    std_logic; --: MDIO output enable
         -- User I/F
         SiTCP_RST             : out    std_logic; --: Reset for SiTCP and related circuits
+        IP_ADDR               : out std_logic_vector(31 downto 0);
         -- TCP connection control
         TCP_OPEN_REQ          : in std_logic; -- : Reserved input, shoud be 0
         TCP_OPEN_ACK          : out    std_logic; --: Acknowledge for open (=Socket busy)
@@ -239,6 +247,7 @@ architecture Behavioral of toplevel is
   end component;
 
   -- SFP transceiver -----------------------------------------------------------------------
+  constant kWidthPhyAddr  : integer:= 5;
   constant kMiiPhyad      : std_logic_vector(kWidthPhyAddr-1 downto 0):= "00000";
   signal mii_init_mdc, mii_init_mdio : std_logic;
 
@@ -324,7 +333,9 @@ architecture Behavioral of toplevel is
 
   clk_locked      <= clk_sys_locked;
   clk_is_ready    <= clk_locked;
-  system_reset    <= (not clk_locked) or (not USR_RSTB);
+  raw_system_reset <= (not clk_locked) or (not USR_RSTB);
+  u_KeepSysRst : entity mylib.RstDelayTimer
+    port map(raw_system_reset, X"1FFFFFFF", clk_sys, module_ready, system_reset);
 
   user_reset      <= system_reset or rst_from_bus or emergency_reset(0);
   bct_reset       <= system_reset or emergency_reset(0);
@@ -337,7 +348,7 @@ architecture Behavioral of toplevel is
   dip_sw(3)   <= DIP(3);
   dip_sw(4)   <= DIP(4);
 
-  LED         <= '0' & tcp_isActive(0) & clk_sys_locked & CDCE_LOCK;
+  LED         <= '0' & tcp_isActive(0) & (clk_sys_locked and module_ready) & CDCE_LOCK;
 
   -- MIKUMARI --------------------------------------------------------------------------
 
@@ -471,7 +482,8 @@ architecture Behavioral of toplevel is
       );
 
   -- SiTCP Inst ------------------------------------------------------------------------
-  sitcp_reset     <= system_reset OR (NOT USR_RSTB);
+  u_SiTCPRst : entity mylib.ResetGen
+   port map(system_reset or (not mmcm_locked), clk_sys, sitcp_reset);
 
   gen_SiTCP : for i in 0 to kNumGtx-1 generate
 
@@ -481,7 +493,7 @@ architecture Behavioral of toplevel is
       port map
       (
         CLK               => clk_sys, --: System Clock >129MHz
-        RST               => sitcp_reset, --: System reset
+        RST               => (sitcp_reset or system_reset), --: System reset
         -- Configuration parameters
         FORCE_DEFAULTn    => dip_sw(kSiTCP.Index), --: Load default parameters
         EXT_IP_ADDR       => X"00000000", --: IP address[31:0]
@@ -520,6 +532,7 @@ architecture Behavioral of toplevel is
         GMII_MDIO_OE      => open, --: MDIO output enable
         -- User I/F
         SiTCP_RST         => emergency_reset(i), --: Reset for SiTCP and related circuits
+        IP_ADDR           => open,
         -- TCP connection control
         TCP_OPEN_REQ      => '0', -- : Reserved input, shoud be 0
         TCP_OPEN_ACK      => tcp_isActive(i), --: Acknowledge for open (=Socket busy)
@@ -578,12 +591,8 @@ architecture Behavioral of toplevel is
   end generate;
 
   -- SFP transceiver -------------------------------------------------------------------
-  u_MiiRstTimer_Inst : entity mylib.MiiRstTimer
-    port map(
-      rst         => system_reset,
-      clk         => clk_sys,
-      rstMiiOut   => mii_reset
-    );
+  u_MiiRstTimer_Inst : entity mylib.RstDelayTimer
+    port map((system_reset or sitcp_reset or emergency_reset(0)), X"00FFFFFF", clk_sys, open, mii_reset);
 
   u_MiiInit_Inst : mii_initializer
     port map(

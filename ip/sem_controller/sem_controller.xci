@@ -4,7 +4,7 @@
     "xci_name": "sem_controller",
     "component_reference": "xilinx.com:ip:sem:4.1",
     "ip_revision": "13",
-    "gen_directory": "../../../../amaneq-skeleton.gen/sources_1/ip/sem_controller",
+    "gen_directory": ".",
     "parameters": {
       "component_parameters": {
         "VALIDATE_DETECTION": [ { "value": "false", "resolve_type": "user", "format": "bool", "usage": "all" } ],
@@ -43,7 +43,7 @@
         "BOARD_CONNECTIONS": [ { "value": "" } ],
         "DEVICE": [ { "value": "xc7k160t" } ],
         "PACKAGE": [ { "value": "ffg676" } ],
-        "PREFHDL": [ { "value": "VHDL" } ],
+        "PREFHDL": [ { "value": "VERILOG" } ],
         "SILICON_REVISION": [ { "value": "" } ],
         "SIMULATOR_LANGUAGE": [ { "value": "MIXED" } ],
         "SPEEDGRADE": [ { "value": "-2" } ],
@@ -56,7 +56,7 @@
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
         "IPREVISION": [ { "value": "13" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../amaneq-skeleton.gen/sources_1/ip/sem_controller" } ],
+        "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2023.1.1" } ],
