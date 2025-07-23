@@ -39,7 +39,7 @@ Once reset and generates the output products, and again set IS_MANAGED to false.
 ```
 [TCL console] set_property IS_MANAGED false [get_files gig_ethernet_pcs_pma.xci]
 ```
-Then, change the IP setting. Please CPLL_FBDIV_45 from 5 to 4 in gig_ethernet_pcs_pma_gtwizard_gt.vhd and change gtrefclk period from 8.000 to 6.400 in gig_ethernet_pcs_pma_ooc.xdc.
+Then, change the IP setting. Please change CPLL_FBDIV_45 from 5 to 4 in gig_ethernet_pcs_pma_gtwizard_gt.vhd, change gtrefclk period from 8.000 to 6.400 in gig_ethernet_pcs_pma_ooc.xdc, and change clock period of Txout clock and recovered Rx clock from 16.000 to 12.800 specified by `create_clock -period` in gig_ethernet_pcs_pma.xdc.
 Finnaly, please update .dcp file from Design Runs. Select gig_ethernet_pcs_pma IP and click the triangle button (Launch Runs).
 After updating, please check that the .dcp file date is actually updated.
 
